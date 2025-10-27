@@ -1,43 +1,112 @@
 package sgu.server.users;
 
-
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
+import sgu.server.utils.ApiResponse;
+
 import java.util.Optional;
 
 @Service
+@Transactional
 public class UserService {
+    private final UserRepository repository;
 
-    private final UserRepository userRepository;
-
-    public UserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public UserService(UserRepository repository) {
+        this.repository = repository;
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    @Transactional
+    public ResponseEntity<ApiResponse> save(User user) {
+        if (repository.findByEmail(user.getEmail()).isPresent()) {
+            return new ResponseEntity<>(
+                    new ApiResponse(HttpStatus.BAD_REQUEST, true, "El correo ya está registrado"),
+                    HttpStatus.BAD_REQUEST
+            );
+        }
+        repository.save(user);
+        return new ResponseEntity<>(
+                new ApiResponse(user, HttpStatus.CREATED),
+                HttpStatus.CREATED
+        );
     }
 
-    public Optional<User> getUserById(Long id) {
-        return userRepository.findById(id);
+    @Transactional
+    public ResponseEntity<ApiResponse> update(User user) {
+        if (user.getId() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse(HttpStatus.BAD_REQUEST,  true, "El ID del usuario es requerido para actualizar."));
+        }
+
+        Optional<User> existing = repository.findById(user.getId());
+
+        if (existing.isEmpty()) {
+            return new ResponseEntity<>(
+                    new ApiResponse(HttpStatus.NOT_FOUND, true, "Usuario no encontrado"),
+                    HttpStatus.NOT_FOUND
+            );
+        }
+
+        User userX = existing.get();
+
+        if (!user.getEmail().equals(userX.getEmail())) {
+            if (repository.existsByEmail(user.getEmail())) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(new ApiResponse(HttpStatus.CONFLICT,true, "Usuario con este email ya existe"));
+            }
+        }
+
+        userX.setFirstName(user.getFirstName());
+        userX.setSecondName(user.getSecondName());
+        userX.setLastName1(user.getLastName1());
+        userX.setLastName2(user.getLastName2());
+        userX.setEmail(user.getEmail());
+        userX.setPhoneNumber(user.getPhoneNumber());
+        repository.save(userX);
+
+        return new ResponseEntity<>(
+                new ApiResponse(existing, HttpStatus.OK),
+                HttpStatus.OK
+        );
     }
 
-    public User createUser(User user) {
-        return userRepository.save(user);
+    @Transactional
+    public ResponseEntity<ApiResponse> delete(Long id) {
+        Optional<User> existing = repository.findById(id);
+        if (existing.isEmpty()) {
+            return new ResponseEntity<>(
+                    new ApiResponse(HttpStatus.NOT_FOUND, true, "Usuario no encontrado"),
+                    HttpStatus.NOT_FOUND
+            );
+        }
+        repository.deleteById(id);
+        return new ResponseEntity<>(
+                new ApiResponse(HttpStatus.OK, false, "Usuario eliminado correctamente"),
+                HttpStatus.OK
+        );
     }
 
-    public User updateUser(Long id, User userData) {
-        return userRepository.findById(id).map(user -> {
-            user.setName(userData.getName());
-            user.setEmail(userData.getEmail());
-            user.setPhone(userData.getPhone());
-            return userRepository.save(user);
-        }).orElse(null);
+    @Transactional
+    public ResponseEntity<ApiResponse> findAll() {
+        return new ResponseEntity<>(
+                new ApiResponse(repository.findAll(), HttpStatus.OK),
+                HttpStatus.OK
+        );
     }
 
-    public boolean deleteUser(Long id) {
-        if (!userRepository.existsById(id)) return false;
-        userRepository.deleteById(id);
-        return true;
+    @Transactional
+    public ResponseEntity<ApiResponse> findById(Long id) {
+        Optional<User> user = repository.findById(id);
+        if (user.isEmpty()) {
+            return new ResponseEntity<>(
+                    new ApiResponse(HttpStatus.NOT_FOUND, true, "Usuario no encontrado"),
+                    HttpStatus.NOT_FOUND
+            );
+        }
+        return new ResponseEntity<>(
+                new ApiResponse(user, HttpStatus.OK),
+                HttpStatus.OK
+        );
     }
 }

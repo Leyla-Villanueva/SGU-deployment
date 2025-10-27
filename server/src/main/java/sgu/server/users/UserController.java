@@ -3,48 +3,43 @@ package sgu.server.users;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import sgu.server.utils.ApiResponse;
+
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*") 
+@CrossOrigin(origins = "*")
 public class UserController {
 
-    private final UserService userService;
+    private final UserService service;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
+    public UserController(UserService service) {
+        this.service = service;
     }
 
-    @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    @GetMapping("/")
+    public ResponseEntity<ApiResponse> findAll() {
+        return service.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-        return userService.getUserById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ApiResponse> findById(@PathVariable Long id) {
+        return service.findById(id);
     }
 
-    @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    @PostMapping("/")
+    public ResponseEntity<ApiResponse> save(@RequestBody User user) {
+        return service.save(user);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
-        User updated = userService.updateUser(id, user);
-        if (updated == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(updated);
+    @PutMapping("/")
+    public ResponseEntity<ApiResponse> update(@RequestBody User user) {
+        return service.update(user);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        boolean deleted = userService.deleteUser(id);
-        if (!deleted) return ResponseEntity.notFound().build();
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ApiResponse> delete(@PathVariable Long id) {
+        return service.delete(id);
     }
 }
 

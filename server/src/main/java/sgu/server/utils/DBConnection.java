@@ -2,11 +2,14 @@ package sgu.server.utils;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
 
-public class DBConnection{
+@Configuration
+public class DBConnection {
+
     @Value("${db.host}")
     private String host;
 
@@ -23,13 +26,12 @@ public class DBConnection{
     private String pass;
 
     @Bean
-    public DataSource getDBConnection(){
+    public DataSource getDBConnection() {
         DriverManagerDataSource source = new DriverManagerDataSource();
         source.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        source.setUrl("jdbc:mysql://"+host+":"+port+"/"+name);
+        source.setUrl("jdbc:mysql://" + host + ":" + port + "/" + name + "?useSSL=false&serverTimezone=UTC");
         source.setUsername(user);
         source.setPassword(pass);
         return source;
     }
 }
-

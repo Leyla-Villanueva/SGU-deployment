@@ -1,40 +1,41 @@
 pipeline {
     agent any
+    
     environment {
         PATH = "/usr/local/bin:${env.PATH}"
     }
 
     stages {
-        
-        // Para detener los servicios o en todo caso hacer caso omiso
-        stage('Deteniendo los servicios...') {
+
+        stage('Parando los servicios...') {
             steps {
                 sh '''
-                    docker compose -p adj-demo down || true
+                    docker compose -p demo down || true
                 '''
             }
         }
-        
-        // Eliminar las imagenes creadas por este proyecto
-        stage('Eliminando imagenes anteriores...') {
+
+
+        stage('Eliminando imágenes anteriores...') {
             steps {
                 sh '''
-                    IMAGES=$(docker images --filter "label=com.docker.compose.project=adj-demo" -q)
-                    if [ -n "$IMAGES" ]; then
+                    IMAGES=$(docker images --filter "label=com.docker.compose.project=demo" -q)
+                    if [-n "$IMAGES" ]; then
                         docker rmi -f $IMAGES
                     else
-                        echo "No hay imagenes por eliminar"
+                        echo "No hay imágenes para eliminar"
                     fi
                 '''
             }
         }
 
-        // Del recurso SCM configurado en el job jala el repo
-        stage('Obteniendo actualizacion...') {
+
+        stage('Obteniendo actualización...') {
             steps {
                 checkout scm
             }
         }
+
 
         stage('Construyendo y desplegando servicios...') {
             steps {
@@ -43,22 +44,21 @@ pipeline {
                 '''
             }
         }
-
     }
 
     post {
         success {
-            echo "Pipeline ejecutado con exito"
+            echo 'Pipeline ejecutado con éxito'
         }
 
         failure {
-            echo "Error al ejecutar el Pipeline"
+            echo 'Hubo un error al ejecutar el pipeline'
         }
 
         always {
-            echo "Pipeline finalizado"
+            echo 'Pipeline finalizado'
         }
     }
-
+    
 }
 

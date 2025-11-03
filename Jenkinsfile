@@ -6,36 +6,36 @@ pipeline {
     }
 
     stages {
-
-        stage('Parando los servicios...') {
+        
+        // Para detener los servicios o en todo caso hacer caso omiso
+        stage('Deteniendo los servicios...') {
             steps {
                 sh '''
-                    docker compose -p demo down || true
+                    docker compose -p adj-demo down || true
                 '''
             }
         }
-
-
-        stage('Eliminando imágenes anteriores...') {
+        
+        // Eliminar las imagenes creadas por este proyecto
+        stage('Eliminando imagenes anteriores...') {
             steps {
                 sh '''
-                    IMAGES=$(docker images --filter "label=com.docker.compose.project=demo" -q)
-                    if [-n "$IMAGES" ]; then
+                    IMAGES=$(docker images --filter "label=com.docker.compose.project=adj-demo" -q)
+                    if [ -n "$IMAGES" ]; then
                         docker rmi -f $IMAGES
                     else
-                        echo "No hay imágenes para eliminar"
+                        echo "No hay imagenes por eliminar"
                     fi
                 '''
             }
         }
 
-
-        stage('Obteniendo actualización...') {
+        // Del recurso SCM configurado en el job jala el repo
+        stage('Obteniendo actualizacion...') {
             steps {
                 checkout scm
             }
         }
-
 
         stage('Construyendo y desplegando servicios...') {
             steps {
@@ -44,21 +44,21 @@ pipeline {
                 '''
             }
         }
+
     }
 
     post {
         success {
-            echo 'Pipeline ejecutado con éxito'
+            echo "Pipeline ejecutado con exito"
         }
 
         failure {
-            echo 'Hubo un error al ejecutar el pipeline'
+            echo "Error al ejecutar el Pipeline"
         }
 
         always {
-            echo 'Pipeline finalizado'
+            echo "Pipeline finalizado"
         }
     }
-    
-}
 
+}
